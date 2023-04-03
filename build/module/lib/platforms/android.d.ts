@@ -1,9 +1,11 @@
 import { Bridge, BridgeSendBotEventParams, BridgeSendClientEventParams, EventEmitterCallback } from '../../types';
+import { HANDLER } from '../constants';
 declare class AndroidBridge implements Bridge {
     private readonly eventEmitter;
     private readonly hasCommunicationObject;
     logsEnabled: boolean;
-    isRenameParamsEnabled: boolean;
+    isRenameParamsEnabledForBotx: boolean;
+    handler: HANDLER | null;
     constructor();
     /**
      * Set callback function to handle events without **ref**
@@ -45,7 +47,7 @@ declare class AndroidBridge implements Bridge {
      * @param guaranteed_delivery_required - boolean.
      * @returns Promise.
      */
-    sendBotEvent({ method, params, files, timeout, guaranteed_delivery_required }: BridgeSendBotEventParams): Promise<import("../../types").EmitterEventPayload>;
+    sendBotEvent({ method, params, files, timeout, guaranteed_delivery_required, }: BridgeSendBotEventParams): Promise<import("../../types").EmitterEventPayload>;
     /**
      * Send event and wait response from express client.
      *

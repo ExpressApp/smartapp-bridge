@@ -1,8 +1,10 @@
 import { Bridge, BridgeSendBotEventParams, BridgeSendClientEventParams, EventEmitterCallback } from '../../types';
+import { HANDLER } from '../constants';
 declare class WebBridge implements Bridge {
     private readonly eventEmitter;
     logsEnabled: boolean;
-    isRenameParamsEnabled: boolean;
+    isRenameParamsEnabledForBotx: boolean;
+    handler: HANDLER | null;
     constructor();
     addGlobalListener(): void;
     /**

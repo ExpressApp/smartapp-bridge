@@ -1,9 +1,11 @@
 import { Bridge, BridgeSendBotEventParams, BridgeSendClientEventParams, EventEmitterCallback } from '../../types';
+import { HANDLER } from '../constants';
 declare class IosBridge implements Bridge {
     private readonly eventEmitter;
     private readonly hasCommunicationObject;
     logsEnabled: boolean;
-    isRenameParamsEnabled: boolean;
+    isRenameParamsEnabledForBotx: boolean;
+    handler: HANDLER | null;
     constructor();
     /**
      * Set callback function to handle events without **ref**

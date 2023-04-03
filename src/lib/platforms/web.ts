@@ -11,37 +11,29 @@ import { camelCaseToSnakeCase, snakeCaseToCamelCase } from '../case'
 import {
   EVENT_TYPE,
   HANDLER,
-  PLATFORM,
   RESPONSE_TIMEOUT,
   WEB_COMMAND_TYPE,
   WEB_COMMAND_TYPE_RPC,
   WEB_COMMAND_TYPE_RPC_LOGS,
 } from '../constants'
 import ExtendedEventEmitter from '../eventEmitter'
-import getPlatform from '../platformDetector'
 
 class WebBridge implements Bridge {
   private readonly eventEmitter: ExtendedEventEmitter
   logsEnabled: boolean
-  isRenameParamsEnabled: boolean
+  isRenameParamsEnabledForBotx: boolean
+  handler: HANDLER | null
 
   constructor() {
     this.eventEmitter = new ExtendedEventEmitter()
     this.addGlobalListener()
     this.logsEnabled = false
-    this.isRenameParamsEnabled = true
+    this.isRenameParamsEnabledForBotx = true
+    this.handler = null
   }
 
   addGlobalListener() {
     window.addEventListener('message', (event: MessageEvent): void => {
-      const isRenameParamsWasEnabled = this.isRenameParamsEnabled
-      if (
-        getPlatform() === PLATFORM.WEB &&
-        event.data.handler === HANDLER.EXPRESS &&
-        this.isRenameParamsEnabled
-      )
-        this.isRenameParamsEnabled = false
-
       if (
         typeof event.data !== 'object' ||
         typeof event.data.data !== 'object' ||
@@ -49,27 +41,27 @@ class WebBridge implements Bridge {
       )
         return
 
-      if (this.logsEnabled) console.log('Bridge ~ Incoming event', event.data)
-
       const {
         ref,
         data: { type, ...payload },
         files,
       } = event.data
 
+      const isRenameParamsEnabled = this.handler === HANDLER.BOTX ? this.isRenameParamsEnabledForBotx : false
+
+      if (this.logsEnabled) console.log('Bridge ~ Incoming event', event.data)
+
       const emitterType = ref || EVENT_TYPE.RECEIVE
 
-      const eventFiles = this.isRenameParamsEnabled ?
+      const eventFiles = isRenameParamsEnabled ?
         files?.map((file: any) => snakeCaseToCamelCase(file)) : files
 
       this.eventEmitter.emit(emitterType, {
         ref,
         type,
-        payload: this.isRenameParamsEnabled ? snakeCaseToCamelCase(payload) : payload,
+        payload: isRenameParamsEnabled ? snakeCaseToCamelCase(payload) : payload,
         files: eventFiles,
       })
-
-      if (isRenameParamsWasEnabled) this.isRenameParamsEnabled = true
     })
   }
 
@@ -98,25 +90,20 @@ class WebBridge implements Bridge {
       guaranteed_delivery_required = false,
     }: BridgeSendEventParams,
   ) {
-    const isRenameParamsInitiallyEnabled = this.isRenameParamsEnabled
-    if (
-      getPlatform() === PLATFORM.WEB &&
-      handler === HANDLER.EXPRESS &&
-      this.isRenameParamsEnabled
-    )
-      this.isRenameParamsEnabled = false
+    const isRenameParamsEnabled = handler === HANDLER.BOTX ? this.isRenameParamsEnabledForBotx : false
 
     const ref = uuid() // UUID to detect express response.
+    this.handler = handler
     const payload = {
       ref,
       type: WEB_COMMAND_TYPE_RPC,
       method,
       handler,
-      payload: this.isRenameParamsEnabled ? camelCaseToSnakeCase(params) : params,
+      payload: isRenameParamsEnabled ? camelCaseToSnakeCase(params) : params,
       guaranteed_delivery_required,
     }
 
-    const eventFiles = this.isRenameParamsEnabled ?
+    const eventFiles = isRenameParamsEnabled ?
       files?.map((file: any) => camelCaseToSnakeCase(file)) : files
 
     const event = files ? { ...payload, files: eventFiles } : payload
@@ -130,7 +117,6 @@ class WebBridge implements Bridge {
       },
       '*',
     )
-    if (isRenameParamsInitiallyEnabled) this.isRenameParamsEnabled = true
 
     return this.eventEmitter.onceWithTimeout(ref, timeout)
   }
@@ -250,7 +236,7 @@ class WebBridge implements Bridge {
    * ```
    */
   enableRenameParams() {
-    this.isRenameParamsEnabled = true
+    this.isRenameParamsEnabledForBotx = true
     console.log('Bridge ~ Enabled renaming event params from camelCase to snake_case and vice versa')
   }
 
@@ -262,7 +248,7 @@ class WebBridge implements Bridge {
    * ```
    */
   disableRenameParams() {
-    this.isRenameParamsEnabled = false
+    this.isRenameParamsEnabledForBotx = false
     console.log('Bridge ~ Disabled renaming event params from camelCase to snake_case and vice versa')
   }
 }
