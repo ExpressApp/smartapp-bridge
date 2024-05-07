@@ -8,7 +8,7 @@ import {
   EventEmitterCallback,
 } from '../../types'
 import { camelCaseToSnakeCase, snakeCaseToCamelCase } from '../case'
-import { EVENT_TYPE, HANDLER, RESPONSE_TIMEOUT, WEB_COMMAND_TYPE_RPC } from '../constants'
+import { EVENT_TYPE, HANDLER, RESPONSE_TIMEOUT, SYNC_RESPONSE_TIMEOUT, WEB_COMMAND_TYPE_RPC } from '../constants'
 import ExtendedEventEmitter from '../eventEmitter'
 import log from '../logger'
 
@@ -91,6 +91,8 @@ class AndroidBridge implements Bridge {
         files,
         timeout = RESPONSE_TIMEOUT,
         guaranteed_delivery_required = false,
+        sync_request = false,
+        sync_request_timeout = SYNC_RESPONSE_TIMEOUT,
       }: BridgeSendEventParams) {
     if (!this.hasCommunicationObject) return Promise.reject()
     const isRenameParamsEnabled = handler === HANDLER.BOTX ? this.isRenameParamsEnabledForBotx : true
@@ -103,6 +105,8 @@ class AndroidBridge implements Bridge {
       handler,
       payload: isRenameParamsEnabled ? camelCaseToSnakeCase(params) : params,
       guaranteed_delivery_required,
+      sync_request,
+      sync_request_timeout,
     }
 
     const eventFiles = isRenameParamsEnabled ?
@@ -152,6 +156,8 @@ class AndroidBridge implements Bridge {
         files,
         timeout,
         guaranteed_delivery_required,
+        sync_request,
+        sync_request_timeout,
       }: BridgeSendBotEventParams,
   ) {
     return this.sendEvent({
@@ -161,6 +167,8 @@ class AndroidBridge implements Bridge {
       files,
       timeout,
       guaranteed_delivery_required,
+      sync_request,
+      sync_request_timeout,
     })
   }
 

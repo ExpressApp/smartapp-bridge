@@ -12,6 +12,7 @@ import {
   EVENT_TYPE,
   HANDLER,
   RESPONSE_TIMEOUT,
+  SYNC_RESPONSE_TIMEOUT,
   WEB_COMMAND_TYPE,
   WEB_COMMAND_TYPE_RPC,
   WEB_COMMAND_TYPE_RPC_LOGS,
@@ -86,6 +87,8 @@ class WebBridge implements Bridge {
         files,
         timeout = RESPONSE_TIMEOUT,
         guaranteed_delivery_required = false,
+        sync_request = false,
+        sync_request_timeout = SYNC_RESPONSE_TIMEOUT,
       }: BridgeSendEventParams,
   ) {
     const isRenameParamsEnabled = handler === HANDLER.BOTX ? this.isRenameParamsEnabledForBotx : false
@@ -98,6 +101,8 @@ class WebBridge implements Bridge {
       handler,
       payload: isRenameParamsEnabled ? camelCaseToSnakeCase(params) : params,
       guaranteed_delivery_required,
+      sync_request,
+      sync_request_timeout,
     }
 
     const eventFiles = isRenameParamsEnabled ?
@@ -144,6 +149,8 @@ class WebBridge implements Bridge {
         files,
         timeout,
         guaranteed_delivery_required,
+        sync_request,
+        sync_request_timeout,
       }: BridgeSendBotEventParams,
   ) {
     return this.sendEvent({
@@ -153,6 +160,8 @@ class WebBridge implements Bridge {
       files,
       timeout,
       guaranteed_delivery_required,
+      sync_request,
+      sync_request_timeout,
     })
   }
 

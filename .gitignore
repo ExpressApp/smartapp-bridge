@@ -6,4 +6,4 @@ src/**.js
 coverage
 *.log
 public
-build/tsconfig.*
+build/

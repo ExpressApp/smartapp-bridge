@@ -16,6 +16,7 @@ export enum HANDLER {
 }
 
 export const RESPONSE_TIMEOUT = 30000
+export const SYNC_RESPONSE_TIMEOUT = 5000
 export const WEB_COMMAND_TYPE = 'smartapp'
 export const WEB_COMMAND_TYPE_RPC = 'smartapp_rpc'
 export const WEB_COMMAND_TYPE_RPC_LOGS = 'smartAppLogs'

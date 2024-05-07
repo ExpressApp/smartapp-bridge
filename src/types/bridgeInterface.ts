@@ -11,6 +11,8 @@ export type BridgeSendClientEventParams = {
 export type BridgeSendBotEventParams = BridgeSendClientEventParams & {
   readonly files?: any
   readonly guaranteed_delivery_required?: boolean | undefined
+  readonly sync_request?: boolean
+  readonly sync_request_timeout?: number
 }
 
 export type BridgeSendEventParams = BridgeSendClientEventParams &
