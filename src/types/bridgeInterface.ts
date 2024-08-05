@@ -13,6 +13,8 @@ export type BridgeSendBotEventParams = BridgeSendClientEventParams & {
   readonly guaranteed_delivery_required?: boolean | undefined
   readonly sync_request?: boolean
   readonly sync_request_timeout?: number
+  readonly hide_send_event_data?: boolean
+  readonly hide_recv_event_data?: boolean
 }
 
 export type BridgeSendEventParams = BridgeSendClientEventParams &
@@ -20,7 +22,7 @@ export type BridgeSendEventParams = BridgeSendClientEventParams &
   readonly handler: HANDLER
 }
 
-export type Bridge = {
+export interface Bridge {
   readonly onReceive: (callback: EventEmitterCallback) => void
   readonly sendBotEvent: (event: BridgeSendBotEventParams) => Promise<EmitterEventPayload>
   readonly sendClientEvent: (event: BridgeSendClientEventParams) => Promise<EmitterEventPayload>
@@ -29,4 +31,9 @@ export type Bridge = {
   readonly enableLogs: () => void
   readonly disableLogs: () => void
   readonly log?: (data: string | object) => void
+}
+
+export type BridgeSendBotEvent = Omit<BridgeSendBotEventParams, 'params'> & {
+  readonly ref: string
+  readonly payload: object | undefined
 }

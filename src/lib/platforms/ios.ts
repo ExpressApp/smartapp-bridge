@@ -10,26 +10,26 @@ import {
 import { camelCaseToSnakeCase, snakeCaseToCamelCase } from '../case'
 import { EVENT_TYPE, HANDLER, RESPONSE_TIMEOUT, SYNC_RESPONSE_TIMEOUT, WEB_COMMAND_TYPE_RPC } from '../constants'
 import ExtendedEventEmitter from '../eventEmitter'
-import log from '../logger'
+import Logger from '../logger'
 
-class IosBridge implements Bridge {
+class IosBridge extends Logger implements Bridge {
   private readonly eventEmitter: ExtendedEventEmitter
   private readonly hasCommunicationObject: boolean
-  logsEnabled: boolean
   isRenameParamsEnabledForBotx: boolean
 
   constructor() {
+    super()
+
     this.hasCommunicationObject =
         window.webkit &&
         window.webkit.messageHandlers &&
         window.webkit.messageHandlers.express &&
         !!window.webkit.messageHandlers.express.postMessage
     this.eventEmitter = new ExtendedEventEmitter()
-    this.logsEnabled = false
     this.isRenameParamsEnabledForBotx = true
 
     if (!this.hasCommunicationObject) {
-      log('No method "express.postMessage", cannot send message to iOS')
+      this.alert('No method "express.postMessage", cannot send message to iOS')
       return
     }
 
@@ -47,8 +47,7 @@ class IosBridge implements Bridge {
           readonly files: any
         },
     ): void => {
-      if (this.logsEnabled)
-        console.log('Bridge ~ Incoming event', JSON.stringify({ ref, data, files }, null, 2))
+      this.logRecvEvent({ ref, data, files })
 
       const { type, ...payload } = data
 
@@ -94,6 +93,8 @@ class IosBridge implements Bridge {
         guaranteed_delivery_required = false,
         sync_request = false,
         sync_request_timeout = SYNC_RESPONSE_TIMEOUT,
+        hide_send_event_data = false,
+        hide_recv_event_data = false,
       }: BridgeSendEventParams,
   ) {
     if (!this.hasCommunicationObject) return Promise.reject()
@@ -109,15 +110,16 @@ class IosBridge implements Bridge {
       guaranteed_delivery_required,
       sync_request,
       sync_request_timeout,
-    }
+      hide_send_event_data,
+      hide_recv_event_data,
+  }
 
     const eventFiles = isRenameParamsEnabled ?
         files?.map((file: any) => camelCaseToSnakeCase(file)) : files
 
     const event = files ? { ...eventProps, files: eventFiles } : eventProps
 
-    if (this.logsEnabled)
-      console.log('Bridge ~ Outgoing event', JSON.stringify(event, null, '  '))
+    this.logSendEvent(event)
 
     window.webkit.messageHandlers.express.postMessage(event)
 
@@ -153,7 +155,9 @@ class IosBridge implements Bridge {
         guaranteed_delivery_required,
         sync_request,
         sync_request_timeout,
-      }: BridgeSendBotEventParams,
+        hide_send_event_data,
+        hide_recv_event_data,
+        }: BridgeSendBotEventParams,
   ) {
     return this.sendEvent(
         {
@@ -165,6 +169,8 @@ class IosBridge implements Bridge {
           guaranteed_delivery_required,
           sync_request,
           sync_request_timeout,
+          hide_send_event_data,
+          hide_recv_event_data,
         },
     )
   }
@@ -204,30 +210,6 @@ class IosBridge implements Bridge {
           timeout,
         },
     )
-  }
-
-  /**
-   * Enabling logs.
-   *
-   * ```js
-   * bridge
-   *   .enableLogs()
-   * ```
-   */
-  enableLogs() {
-    this.logsEnabled = true
-  }
-
-  /**
-   * Disabling logs.
-   *
-   * ```js
-   * bridge
-   *   .disableLogs()
-   * ```
-   */
-  disableLogs() {
-    this.logsEnabled = false
   }
 
   /**
