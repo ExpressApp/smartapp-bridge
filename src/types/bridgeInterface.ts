@@ -6,6 +6,8 @@ export type BridgeSendClientEventParams = {
   readonly method: string
   readonly params: object | undefined
   readonly timeout?: number
+  readonly hide_send_event_data?: boolean
+  readonly hide_recv_event_data?: boolean
 }
 
 export type BridgeSendBotEventParams = BridgeSendClientEventParams & {

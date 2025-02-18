@@ -35,9 +35,9 @@ class WebBridge extends Logger implements Bridge {
   addGlobalListener() {
     window.addEventListener('message', (event: MessageEvent): void => {
       if (
-          typeof event.data !== 'object' ||
-          typeof event.data.data !== 'object' ||
-          typeof event.data.data.type !== 'string'
+        typeof event.data !== 'object' ||
+        typeof event.data.data !== 'object' ||
+        typeof event.data.data.type !== 'string'
       )
         return
 
@@ -53,8 +53,7 @@ class WebBridge extends Logger implements Bridge {
 
       const emitterType = ref || EVENT_TYPE.RECEIVE
 
-      const eventFiles = isRenameParamsEnabled ?
-          files?.map((file: any) => snakeCaseToCamelCase(file)) : files
+      const eventFiles = isRenameParamsEnabled ? files?.map((file: any) => snakeCaseToCamelCase(file)) : files
 
       this.eventEmitter.emit(emitterType, {
         ref,
@@ -80,20 +79,18 @@ class WebBridge extends Logger implements Bridge {
     this.eventEmitter.on(EVENT_TYPE.RECEIVE, callback)
   }
 
-  private sendEvent(
-      {
-        handler,
-        method,
-        params,
-        files,
-        timeout = RESPONSE_TIMEOUT,
-        guaranteed_delivery_required = false,
-        sync_request = false,
-        sync_request_timeout = SYNC_RESPONSE_TIMEOUT,
-        hide_send_event_data = false,
-        hide_recv_event_data = false,
-        }: BridgeSendEventParams,
-  ) {
+  private sendEvent({
+    handler,
+    method,
+    params,
+    files,
+    timeout = RESPONSE_TIMEOUT,
+    guaranteed_delivery_required = false,
+    sync_request = false,
+    sync_request_timeout = SYNC_RESPONSE_TIMEOUT,
+    hide_send_event_data = false,
+    hide_recv_event_data = false,
+  }: BridgeSendEventParams) {
     const isRenameParamsEnabled = handler === HANDLER.BOTX ? this.isRenameParamsEnabledForBotx : false
 
     const ref = uuid() // UUID to detect express response.
@@ -110,19 +107,18 @@ class WebBridge extends Logger implements Bridge {
       hide_recv_event_data,
     }
 
-    const eventFiles = isRenameParamsEnabled ?
-        files?.map((file: any) => camelCaseToSnakeCase(file)) : files
+    const eventFiles = isRenameParamsEnabled ? files?.map((file: any) => camelCaseToSnakeCase(file)) : files
 
     const event = files ? { ...payload, files: eventFiles } : payload
 
     this.logSendEvent(event)
 
     window.parent.postMessage(
-        {
-          type: WEB_COMMAND_TYPE,
-          payload: event,
-        },
-        '*',
+      {
+        type: WEB_COMMAND_TYPE,
+        payload: event,
+      },
+      '*'
     )
 
     return this.eventEmitter.onceWithTimeout(ref, timeout)
@@ -147,19 +143,17 @@ class WebBridge extends Logger implements Bridge {
    *   })
    * ```
    */
-  sendBotEvent(
-      {
-        method,
-        params,
-        files,
-        timeout,
-        guaranteed_delivery_required,
-        sync_request,
-        sync_request_timeout,
-        hide_send_event_data,
-        hide_recv_event_data,
-        }: BridgeSendBotEventParams,
-  ) {
+  sendBotEvent({
+    method,
+    params,
+    files,
+    timeout,
+    guaranteed_delivery_required,
+    sync_request,
+    sync_request_timeout,
+    hide_send_event_data,
+    hide_recv_event_data,
+  }: BridgeSendBotEventParams) {
     return this.sendEvent({
       handler: HANDLER.BOTX,
       method,
@@ -193,17 +187,22 @@ class WebBridge extends Logger implements Bridge {
    *   })
    * ```
    */
-  sendClientEvent(
-      { method, params, timeout }: BridgeSendClientEventParams,
-  ) {
-    return this.sendEvent(
-        {
-          handler: HANDLER.EXPRESS,
-          method,
-          params,
-          timeout,
-        },
-    )
+  sendClientEvent({
+    method,
+    params,
+    timeout,
+
+    hide_send_event_data,
+    hide_recv_event_data,
+  }: BridgeSendClientEventParams) {
+    return this.sendEvent({
+      handler: HANDLER.EXPRESS,
+      method,
+      params,
+      timeout,
+      hide_send_event_data,
+      hide_recv_event_data,
+    })
   }
 
   /**
@@ -218,13 +217,13 @@ class WebBridge extends Logger implements Bridge {
     this.logsEnabled = true
     const _log = console.log
 
-    console.log = function(...rest: unknown[]) {
+    console.log = function (...rest: unknown[]) {
       window.parent.postMessage(
-          {
-            type: WEB_COMMAND_TYPE_RPC_LOGS,
-            payload: rest,
-          },
-          '*',
+        {
+          type: WEB_COMMAND_TYPE_RPC_LOGS,
+          payload: rest,
+        },
+        '*'
       )
 
       _log.apply(console, rest)

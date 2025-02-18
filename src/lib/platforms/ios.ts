@@ -21,10 +21,10 @@ class IosBridge extends Logger implements Bridge {
     super()
 
     this.hasCommunicationObject =
-        window.webkit &&
-        window.webkit.messageHandlers &&
-        window.webkit.messageHandlers.express &&
-        !!window.webkit.messageHandlers.express.postMessage
+      window.webkit &&
+      window.webkit.messageHandlers &&
+      window.webkit.messageHandlers.express &&
+      !!window.webkit.messageHandlers.express.postMessage
     this.eventEmitter = new ExtendedEventEmitter()
     this.isRenameParamsEnabledForBotx = true
 
@@ -34,19 +34,17 @@ class IosBridge extends Logger implements Bridge {
     }
 
     // Expect json data as string
-    window.handleIosEvent = (
-        {
-          ref,
-          data,
-          files,
-        }: {
-          readonly ref: string
-          readonly data: {
-            readonly type: string
-          }
-          readonly files: any
-        },
-    ): void => {
+    window.handleIosEvent = ({
+      ref,
+      data,
+      files,
+    }: {
+      readonly ref: string
+      readonly data: {
+        readonly type: string
+      }
+      readonly files: any
+    }): void => {
       this.logRecvEvent({ ref, data, files })
 
       const { type, ...payload } = data
@@ -54,8 +52,9 @@ class IosBridge extends Logger implements Bridge {
       const emitterType = ref || EVENT_TYPE.RECEIVE
       // const isRenameParamsEnabled = data.handler === HANDLER.BOTX ? this.isRenameParamsEnabledForBotx : true // TODO uncomment when client is ready
 
-      const eventFiles = this.isRenameParamsEnabledForBotx ?
-          files?.map((file: any) => snakeCaseToCamelCase(file)) : files
+      const eventFiles = this.isRenameParamsEnabledForBotx
+        ? files?.map((file: any) => snakeCaseToCamelCase(file))
+        : files
 
       const event = {
         ref,
@@ -83,20 +82,18 @@ class IosBridge extends Logger implements Bridge {
     this.eventEmitter.on(EVENT_TYPE.RECEIVE, callback)
   }
 
-  private sendEvent(
-      {
-        handler,
-        method,
-        params,
-        files,
-        timeout = RESPONSE_TIMEOUT,
-        guaranteed_delivery_required = false,
-        sync_request = false,
-        sync_request_timeout = SYNC_RESPONSE_TIMEOUT,
-        hide_send_event_data = false,
-        hide_recv_event_data = false,
-      }: BridgeSendEventParams,
-  ) {
+  private sendEvent({
+    handler,
+    method,
+    params,
+    files,
+    timeout = RESPONSE_TIMEOUT,
+    guaranteed_delivery_required = false,
+    sync_request = false,
+    sync_request_timeout = SYNC_RESPONSE_TIMEOUT,
+    hide_send_event_data = false,
+    hide_recv_event_data = false,
+  }: BridgeSendEventParams) {
     if (!this.hasCommunicationObject) return Promise.reject()
 
     const ref = uuid() // UUID to detect express response.
@@ -112,10 +109,9 @@ class IosBridge extends Logger implements Bridge {
       sync_request_timeout,
       hide_send_event_data,
       hide_recv_event_data,
-  }
+    }
 
-    const eventFiles = isRenameParamsEnabled ?
-        files?.map((file: any) => camelCaseToSnakeCase(file)) : files
+    const eventFiles = isRenameParamsEnabled ? files?.map((file: any) => camelCaseToSnakeCase(file)) : files
 
     const event = files ? { ...eventProps, files: eventFiles } : eventProps
 
@@ -146,33 +142,29 @@ class IosBridge extends Logger implements Bridge {
    *   })
    * ```
    */
-  sendBotEvent(
-      {
-        method,
-        params,
-        files,
-        timeout = RESPONSE_TIMEOUT,
-        guaranteed_delivery_required,
-        sync_request,
-        sync_request_timeout,
-        hide_send_event_data,
-        hide_recv_event_data,
-        }: BridgeSendBotEventParams,
-  ) {
-    return this.sendEvent(
-        {
-          handler: HANDLER.BOTX,
-          method,
-          params,
-          files,
-          timeout,
-          guaranteed_delivery_required,
-          sync_request,
-          sync_request_timeout,
-          hide_send_event_data,
-          hide_recv_event_data,
-        },
-    )
+  sendBotEvent({
+    method,
+    params,
+    files,
+    timeout = RESPONSE_TIMEOUT,
+    guaranteed_delivery_required,
+    sync_request,
+    sync_request_timeout,
+    hide_send_event_data,
+    hide_recv_event_data,
+  }: BridgeSendBotEventParams) {
+    return this.sendEvent({
+      handler: HANDLER.BOTX,
+      method,
+      params,
+      files,
+      timeout,
+      guaranteed_delivery_required,
+      sync_request,
+      sync_request_timeout,
+      hide_send_event_data,
+      hide_recv_event_data,
+    })
   }
 
   /**
@@ -195,21 +187,21 @@ class IosBridge extends Logger implements Bridge {
    *   })
    * ```
    */
-  sendClientEvent(
-      {
-        method,
-        params,
-        timeout = RESPONSE_TIMEOUT,
-      }: BridgeSendClientEventParams,
-  ) {
-    return this.sendEvent(
-        {
-          handler: HANDLER.EXPRESS,
-          method,
-          params,
-          timeout,
-        },
-    )
+  sendClientEvent({
+    method,
+    params,
+    timeout = RESPONSE_TIMEOUT,
+    hide_send_event_data,
+    hide_recv_event_data,
+  }: BridgeSendClientEventParams) {
+    return this.sendEvent({
+      handler: HANDLER.EXPRESS,
+      method,
+      params,
+      timeout,
+      hide_send_event_data,
+      hide_recv_event_data,
+    })
   }
 
   /**
