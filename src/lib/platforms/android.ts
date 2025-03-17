@@ -10,51 +10,47 @@ import {
 import { camelCaseToSnakeCase, snakeCaseToCamelCase } from '../case'
 import { EVENT_TYPE, HANDLER, RESPONSE_TIMEOUT, SYNC_RESPONSE_TIMEOUT, WEB_COMMAND_TYPE_RPC } from '../constants'
 import ExtendedEventEmitter from '../eventEmitter'
-import log from '../logger'
+import Logger from '../logger'
 
-class AndroidBridge implements Bridge {
+class AndroidBridge extends Logger implements Bridge {
   private readonly eventEmitter: ExtendedEventEmitter
   private readonly hasCommunicationObject: boolean
-  logsEnabled: boolean
   isRenameParamsEnabledForBotx: boolean
 
   constructor() {
+    super()
+
     this.hasCommunicationObject = typeof window.express !== 'undefined' && !!window.express.handleSmartAppEvent
     this.eventEmitter = new ExtendedEventEmitter()
-    this.logsEnabled = false
     this.isRenameParamsEnabledForBotx = true
 
     if (!this.hasCommunicationObject) {
-      log('No method "express.handleSmartAppEvent", cannot send message to Android')
+      this.alert('No method "express.handleSmartAppEvent", cannot send message to Android')
       return
     }
 
     // Expect json data as string
-    window.handleAndroidEvent = (
-        {
-          ref,
-          data,
-          files,
-        }: {
-          readonly ref: string
-          readonly data: {
-            readonly type: string
-          }
-          readonly files: any
-        }): void => {
-      if (this.logsEnabled)
-        console.log(
-            'Bridge ~ Incoming event',
-            JSON.stringify({ ref, data, files }, null, 2),
-        )
+    window.handleAndroidEvent = ({
+      ref,
+      data,
+      files,
+    }: {
+      readonly ref: string
+      readonly data: {
+        readonly type: string
+      }
+      readonly files: any
+    }): void => {
+      this.logRecvEvent({ ref, data, files })
 
       const { type, ...payload } = data
 
       const emitterType = ref || EVENT_TYPE.RECEIVE
 
       // const isRenameParamsEnabled = data.handler === HANDLER.BOTX ? this.isRenameParamsEnabledForBotx : true // TODO uncomment when client is ready
-      const eventFiles = this.isRenameParamsEnabledForBotx ?
-          files?.map((file: any) => snakeCaseToCamelCase(file)) : files
+      const eventFiles = this.isRenameParamsEnabledForBotx
+        ? files?.map((file: any) => snakeCaseToCamelCase(file))
+        : files
 
       const event = {
         ref,
@@ -83,17 +79,18 @@ class AndroidBridge implements Bridge {
     this.eventEmitter.on(EVENT_TYPE.RECEIVE, callback)
   }
 
-  private sendEvent(
-      {
-        handler,
-        method,
-        params,
-        files,
-        timeout = RESPONSE_TIMEOUT,
-        guaranteed_delivery_required = false,
-        sync_request = false,
-        sync_request_timeout = SYNC_RESPONSE_TIMEOUT,
-      }: BridgeSendEventParams) {
+  private sendEvent({
+    handler,
+    method,
+    params,
+    files,
+    timeout = RESPONSE_TIMEOUT,
+    guaranteed_delivery_required = false,
+    sync_request = false,
+    sync_request_timeout = SYNC_RESPONSE_TIMEOUT,
+    hide_send_event_data = false,
+    hide_recv_event_data = false,
+  }: BridgeSendEventParams) {
     if (!this.hasCommunicationObject) return Promise.reject()
     const isRenameParamsEnabled = handler === HANDLER.BOTX ? this.isRenameParamsEnabledForBotx : true
 
@@ -107,18 +104,17 @@ class AndroidBridge implements Bridge {
       guaranteed_delivery_required,
       sync_request,
       sync_request_timeout,
+      hide_send_event_data,
+      hide_recv_event_data,
     }
 
-    const eventFiles = isRenameParamsEnabled ?
-        files?.map((file: any) => camelCaseToSnakeCase(file)) : files
+    const eventFiles = isRenameParamsEnabled ? files?.map((file: any) => camelCaseToSnakeCase(file)) : files
 
-    const event = JSON.stringify(
-        files ? { ...eventParams, files: eventFiles } : eventParams,
-    )
+    const event = files ? { ...eventParams, files: eventFiles } : eventParams
 
-    if (this.logsEnabled) console.log('Bridge ~ Outgoing event', JSON.stringify(event, null, '  '))
+    this.logSendEvent(event)
 
-    window.express.handleSmartAppEvent(event)
+    window.express.handleSmartAppEvent(JSON.stringify(event))
 
     return this.eventEmitter.onceWithTimeout(ref, timeout)
   }
@@ -147,19 +143,23 @@ class AndroidBridge implements Bridge {
    * @param files
    * @param timeout - Timeout in ms.
    * @param guaranteed_delivery_required - boolean.
+   * @param sync_request - boolean, default false
+   * @param sync_request_timeout - number
+   * @param hide_send_event_data - boolean, default false
+   * @param hide_recv_event_data - boolean, default false
    * @returns Promise.
    */
-  sendBotEvent(
-      {
-        method,
-        params,
-        files,
-        timeout,
-        guaranteed_delivery_required,
-        sync_request,
-        sync_request_timeout,
-      }: BridgeSendBotEventParams,
-  ) {
+  sendBotEvent({
+    method,
+    params,
+    files,
+    timeout,
+    guaranteed_delivery_required,
+    sync_request,
+    sync_request_timeout,
+    hide_send_event_data,
+    hide_recv_event_data,
+  }: BridgeSendBotEventParams) {
     return this.sendEvent({
       handler: HANDLER.BOTX,
       method,
@@ -169,6 +169,8 @@ class AndroidBridge implements Bridge {
       guaranteed_delivery_required,
       sync_request,
       sync_request_timeout,
+      hide_send_event_data,
+      hide_recv_event_data,
     })
   }
 
@@ -196,32 +198,21 @@ class AndroidBridge implements Bridge {
    * @param timeout - Timeout in ms.
    * @returns Promise.
    */
-  sendClientEvent({ method, params, timeout }: BridgeSendClientEventParams) {
-    return this.sendEvent({ handler: HANDLER.EXPRESS, method, params, timeout })
-  }
-
-  /**
-   * Enabling logs.
-   *
-   * ```js
-   * bridge
-   *   .enableLogs()
-   * ```
-   */
-  enableLogs() {
-    this.logsEnabled = true
-  }
-
-  /**
-   * Disabling logs.
-   *
-   * ```js
-   * bridge
-   *   .disableLogs()
-   * ```
-   */
-  disableLogs() {
-    this.logsEnabled = false
+  sendClientEvent({
+    method,
+    params,
+    timeout,
+    hide_send_event_data,
+    hide_recv_event_data,
+  }: BridgeSendClientEventParams) {
+    return this.sendEvent({
+      handler: HANDLER.EXPRESS,
+      method,
+      params,
+      timeout,
+      hide_send_event_data,
+      hide_recv_event_data,
+    })
   }
 
   /**
@@ -249,14 +240,10 @@ class AndroidBridge implements Bridge {
   }
 
   log(data: string | object) {
-    if (
-        (!this.hasCommunicationObject || !data) ||
-        (typeof data !== 'string' && typeof data !== 'object')
-    ) return
+    if (!this.hasCommunicationObject) return
+    if (!data || (typeof data !== 'string' && typeof data !== 'object')) return
 
-    window.express.handleSmartAppEvent(
-        JSON.stringify({ 'SmartApp Log': data }, null, 2),
-    )
+    window.express.handleSmartAppEvent(JSON.stringify({ 'SmartApp Log': data }, null, 2))
   }
 }
 
