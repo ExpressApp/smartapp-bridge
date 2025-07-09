@@ -33,6 +33,7 @@ export interface Bridge {
   readonly enableLogs: () => void
   readonly disableLogs: () => void
   readonly log?: (data: string | object) => void
+  readonly hideRecvData: () => void
 }
 
 export type BridgeSendBotEvent = Omit<BridgeSendBotEventParams, 'params'> & {

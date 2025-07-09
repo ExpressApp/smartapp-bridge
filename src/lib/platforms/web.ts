@@ -74,6 +74,7 @@ class WebBridge extends Logger implements Bridge {
    *   console.log('event', type, handler, payload)
    * })
    * ```
+   * @param callback - Callback function.
    */
   onReceive(callback: EventEmitterCallback) {
     this.eventEmitter.on(EVENT_TYPE.RECEIVE, callback)
