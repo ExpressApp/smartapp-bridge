@@ -4,6 +4,7 @@ const DATA_MASK = '***'
 class Logger {
   logsEnabled: boolean
   private hideRecvLogPayload: Map<string, boolean>
+  private hideRecvLogNullRefPayload = false
 
   constructor() {
     this.logsEnabled = false
@@ -60,12 +61,12 @@ class Logger {
   }
 
   logRecvEvent(event: { ref: string; data: object; files: [] }) {
-    const hideRecvLogPayload = !!this.hideRecvLogPayload.get(event.ref)
+    const hideLogPayload = !!this.hideRecvLogPayload.get(event.ref) || (this.hideRecvLogNullRefPayload && !event.ref)
     this.hideRecvLogPayload.delete(event.ref)
 
     if (!this.logsEnabled) return
 
-    const logEvent = hideRecvLogPayload
+    const logEvent = hideLogPayload
       ? {
           ...event,
           data: DATA_MASK,
@@ -73,6 +74,17 @@ class Logger {
       : event
 
     console.log('Bridge ~ Incoming event', JSON.stringify(logEvent, null, 2))
+  }
+
+  /**
+   * Hide payload for null ref events (onReceive callback)
+   *
+   * ```js
+   * bridge.hideRecvData()
+   * ```
+   */
+  hideRecvData() {
+    this.hideRecvLogNullRefPayload = true
   }
 }
 
