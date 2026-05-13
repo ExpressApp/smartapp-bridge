@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartApp bridge testing</title>
+  <style>
+    * {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Test bridge for Aurora</h1>
+  <button onclick="sendMessageToClient()">Send message to client</button>
+  <textarea style="width: 100%; height: 80vh; margin-top: 10px;" id="log"></textarea>
+  <script>
+    function log(...data) {
+      var value = data.map(d => typeof d === 'object' && JSON.stringify(d) || `${d}`).join(", ");
+      document.getElementById("log").value += `${value}\r\n`;
+    }
+    
+    function send(topic) {
+        var customEvent = new CustomEvent("framescript:action",
+            {detail: { topic: topic}});
+        document.dispatchEvent(customEvent);
+    }
+
+    window.addEventListener("DOMContentLoaded", function (event) {
+      log('originalTarget', event.originalTarget);
+      log('originalTarget name =',
+        event.originalTarget && 
+        event.originalTarget.__proto__ && 
+        event.originalTarget.__proto__.constructor &&
+        event.originalTarget.__proto__.constructor.name
+      );
+    });
+
+    // Отправка события
+    function sendMessageToClient() {
+      send('hello world')
+      log('Event sent');
+    }
+  </script>
+</body>
+
+</html>

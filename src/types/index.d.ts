@@ -17,5 +17,9 @@ declare global {
         }
       }
     }
+
+    // Aurora interface
+    handleAuroraEvent: Function
+    sendAsyncMessage?: (type: string, event: object | string) => void
   }
 }
