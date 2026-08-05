@@ -21,6 +21,10 @@ const detectPlatformByUserAgent = (): PLATFORM => {
   )
     return PLATFORM.IOS
 
+  if (/aurora/i.test(navigator.userAgent)) {
+    return PLATFORM.AURORA
+  }
+
   return PLATFORM.WEB
 }
 
@@ -30,7 +34,7 @@ const detectPlatformByUserAgent = (): PLATFORM => {
  * ```typescript
  * const platform = getPlatform();
  *
- * // => 'web' | 'ios' | 'android'
+ * // => 'web' | 'ios' | 'android' | 'aurora'
  * ```
  */
 const getPlatform = (): PLATFORM => {

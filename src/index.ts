@@ -1,6 +1,7 @@
 import { PLATFORM } from './lib/constants'
 import getPlatform from './lib/platformDetector'
 import AndroidBridge from './lib/platforms/android'
+import AuroraBridge from './lib/platforms/aurora'
 import IosBridge from './lib/platforms/ios'
 import WebBridge from './lib/platforms/web'
 import { Bridge } from './types/bridgeInterface'
@@ -15,6 +16,8 @@ const getBridge = (): Bridge | null => {
   switch (platform) {
     case PLATFORM.ANDROID:
       return new AndroidBridge()
+    case PLATFORM.AURORA:
+      return new AuroraBridge()
     case PLATFORM.IOS:
       return new IosBridge()
     case PLATFORM.WEB:

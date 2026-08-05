@@ -2,6 +2,7 @@ export enum PLATFORM {
   WEB = 'web',
   IOS = 'ios',
   ANDROID = 'android',
+  AURORA = 'aurora',
   UNKNOWN = 'unknown',
 }
 

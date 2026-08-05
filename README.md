@@ -1,7 +1,7 @@
 # SmartApp bridge library
 
 This library provides a universal interface for exchanging events with an express client.
-Andriod, iOS and Web clients supported.
+Andriod, iOS, Aurora and Web clients supported.
 
 All types can be found [here](https://smartapp.ccsteam.xyz/smartapp-bridge/).
 
